@@ -99,6 +99,44 @@ let private attr (e: XElement) (name: string) =
     | null -> None
     | a -> Some a.Value
 
+/// <summary>
+/// Problems with each <c>include</c> in a doc: a missing or malformed file or a <c>path</c> that
+/// selects nothing, at the include's line; included fragments outside the tag conventions, at the
+/// fragment's line in the XML file.
+/// </summary>
+/// <remarks>
+/// <c>file</c> resolves against the source file's directory. A fragment shared by many includes yields
+/// identical findings, which <c>auditWith</c> collapses. An include that resolves is never reported:
+/// expansion before .NET 11 is out of the audit's scope.
+/// </remarks>
+let includeFindings (file: string) (docLine: int) (root: XElement) : Finding list =
+    let dir = Path.GetDirectoryName(Path.GetFullPath file)
+    [ for inc in root.Descendants(XName.Get "include") do
+          let line = docLine + (inc :> System.Xml.IXmlLineInfo).LineNumber - 1
+          let at kind message = { File = file; Line = line; Kind = kind; Message = message }
+          match attr inc "file", attr inc "path" with
+          | Some rel, Some xpath ->
+              let target = Path.Combine(dir, rel)
+              match (try Ok(XDocument.Load(target, LoadOptions.SetLineInfo)) with e -> Error e) with
+              | Error(:? FileNotFoundException | :? DirectoryNotFoundException) ->
+                  at "include-unresolved" (sprintf "file %s does not exist" rel)
+              | Error e -> at "include-unresolved" (sprintf "%s is not well-formed XML: %s" rel e.Message)
+              | Ok xml ->
+                  match (try Ok(List.ofSeq (System.Xml.XPath.Extensions.XPathSelectElements(xml, xpath))) with e -> Error e.Message) with
+                  | Error e -> at "include-unresolved" (sprintf "path %s cannot select elements: %s" xpath e)
+                  | Ok [] -> at "include-unresolved" (sprintf "path %s selects nothing in %s" xpath rel)
+                  | Ok fragments ->
+                      let inXml (e: XElement) kind message =
+                          { File = Path.GetFullPath target; Line = (e :> System.Xml.IXmlLineInfo).LineNumber
+                            Kind = kind; Message = message }
+                      for f in fragments do
+                          for e in Seq.append [ f ] (f.Descendants()) do
+                              if e.Name.LocalName = "code" && (attr e "lang").IsNone then
+                                  inXml e "code-lang" "<code> in an included fragment has no lang attribute"
+                              if Seq.isEmpty (e.Ancestors(XName.Get "code")) && not (allowedTags.Contains e.Name.LocalName) then
+                                  inXml e "non-standard-tag" (sprintf "<%s> in an included fragment is outside the tag set" e.Name.LocalName)
+          | _ -> at "include-unresolved" "<include> needs both file and path attributes" ]
+
 /// <summary>Findings the compiler never reports: shape and tag conventions.</summary>
 let conventionFindings (file: string) (d: XmlDoc) : Finding list =
     let at kind message = { File = file; Line = d.Range.StartLine; Kind = kind; Message = message }
@@ -106,7 +144,7 @@ let conventionFindings (file: string) (d: XmlDoc) : Finding list =
     if not (text.TrimStart().StartsWith "<") then
         [ at "bare-doc" "doc has no <summary>; bare /// text is summary-only and unchecked" ]
     else
-        match (try Some(XElement.Parse("<doc>" + text + "</doc>")) with _ -> None) with
+        match (try Some(XElement.Parse("<doc>" + text + "</doc>", LoadOptions.SetLineInfo)) with _ -> None) with
         | None -> [] // FS3390 reports malformed XML with a better position.
         | Some root ->
             let children (n: string) = root.Elements(XName.Get n) |> List.ofSeq
@@ -124,7 +162,8 @@ let conventionFindings (file: string) (d: XmlDoc) : Finding list =
                       at "code-lang" "<code> has no lang attribute; use lang=\"fsharp\""
               for e in root.Descendants() do
                   if outsideCode e && not (allowedTags.Contains e.Name.LocalName) then
-                      at "non-standard-tag" (sprintf "<%s> is outside the Microsoft/Partas tag set" e.Name.LocalName) ]
+                      at "non-standard-tag" (sprintf "<%s> is outside the Microsoft/Partas tag set" e.Name.LocalName)
+              yield! includeFindings file d.Range.StartLine root ]
 
 /// <summary>FS3390 diagnostics: malformed XML, unknown and undocumented <c>param</c> names.</summary>
 /// <remarks>
@@ -237,6 +276,7 @@ let auditWith (compiler: bool) (includeGenerated: bool) (paths: string seq) : Fi
     sourcesUnder includeGenerated paths
     |> List.toArray
     |> Array.Parallel.collect (auditFile compiler >> List.toArray)
+    |> Array.distinct
     |> List.ofArray
 
 /// <summary>Audits hand-written sources under <c>paths</c>.</summary>

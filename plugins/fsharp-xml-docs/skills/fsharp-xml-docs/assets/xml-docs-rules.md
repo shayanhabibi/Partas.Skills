@@ -13,7 +13,9 @@ that must be in context while a doc is being written.
 - Tags: `summary remarks param typeparam returns exception seealso example include` and inline
   `para code c paramref typeparamref see`. `<code>` always has `lang` (`<code lang="fsharp">`).
   Paragraphs are `<para>`, never `<br/>`. crefs use the full form (`T:Ns.Type`).
-- `<include>` is allowed for text shared by several members; keep the `<summary>` inline. Before
-  .NET 11 it does not expand in the generated `.xml`; that is expected, not a defect.
+- `<include>` is allowed for text shared by several members; keep the `<summary>` inline. Write
+  the fragment into `xmldoc/<module>.xml` in the same edit as the tag; each fragment holds complete
+  `<remarks>`/`<example>` elements. Before .NET 11 it does not expand in the generated `.xml`;
+  that is expected, not a defect.
 - Write the doc with the declaration, from the code in front of you, not at the end of the change.
 - Docs from a generator or transcribed from JS/TS docs (JSDoc, MDN) are left as they are unless the user asks.

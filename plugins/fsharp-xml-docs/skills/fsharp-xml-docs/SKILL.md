@@ -102,8 +102,24 @@ Use it for text shared by two or more members (overload families, builder operat
 same remark), or for a long example that would bury the declaration. Keep the `<summary>` inline
 so a source reader always sees the contract at the declaration; include the shared `<remarks>`
 or `<example>`, e.g. `/// <include file="../xmldoc/command.xml" path="/command/aliasRemark/*"/>`.
-The included file lives in an `xmldoc/` folder beside the sources, one root
-element per module and one child per shared fragment, as in Partas.Build.
+
+An `<include>` and its fragment are one change: write the fragment into the XML file in the same
+edit that adds the tag, creating the file if needed. The file lives in an `xmldoc/` folder beside
+the sources, one root element per module and one child per shared fragment; `file` is relative to
+the `.fs` file. `path="/root/fragment/*"` splices the fragment's children beside `<summary>`, so
+each fragment holds complete top-level elements and follows the same tag rules as inline docs:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<command>
+  <aliasRemark>
+    <remarks>Aliases accumulate: calling this twice adds both rather than replacing the first.</remarks>
+  </aliasRemark>
+</command>
+```
+
+When moving duplicated text into a fragment, delete it from every member that now includes it.
+The audit's `include-unresolved` confirms each tag resolves.
 
 ## Density: what earns a line
 
@@ -148,7 +164,9 @@ Run the audit script on the files or directories in scope. It reports two groups
 - **Conventions** (parse only, milliseconds per file): `bare-doc`, `missing-summary`,
   `empty-param`, `empty-tag`, `code-lang`, `non-standard-tag`, and `long-line` (a `///` line
   wider than the nearest `.editorconfig` `max_line_length`, 150 if none; a lone unbreakable tag
-  such as a long cref is exempt). Do not run separate width checks.
+  such as a long cref is exempt). Do not run separate width checks. `include-unresolved` flags
+  an `<include>` whose file is missing or malformed or whose `path` selects nothing; fragments it
+  selects get `code-lang` and `non-standard-tag` at their line in the XML file.
 - **Compiler** (`--compiler`, adds a type-check per file): FS3390 malformed XML, unknown
   `<param>` names, and undocumented parameters in a partially documented member. It works on a
   file checked alone; unresolved project references do not suppress it.

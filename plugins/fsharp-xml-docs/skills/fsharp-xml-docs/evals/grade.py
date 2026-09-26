@@ -4,6 +4,7 @@ python grade.py <iteration-dir>
 Writes grading.json into every <eval>/<config>/run-<n>/ directory.
 """
 import json
+import xml.etree.ElementTree as ET
 import re
 import subprocess
 import sys
@@ -11,7 +12,8 @@ from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
 AUDIT = SKILL / "scripts" / "audit.fsx"
-CONVENTION_KINDS = {"bare-doc", "missing-summary", "empty-param", "empty-tag", "code-lang", "non-standard-tag"}
+CONVENTION_KINDS = {"bare-doc", "missing-summary", "empty-param", "empty-tag", "code-lang", "non-standard-tag",
+                    "long-line", "include-unresolved"}
 
 
 def audit(path: Path) -> list[tuple[int, str, str]]:
@@ -159,7 +161,59 @@ def grade_eval3(run: Path) -> list[dict]:
     return res + audit_checks(out)
 
 
-GRADERS = {1: grade_eval1, 2: grade_eval2, 3: grade_eval3}
+DELAY_REMARK = "The delay is the wait before the first retry only."
+ATTEMPTS_REMARK = "The last setting wins"
+
+
+def grade_eval4(run: Path) -> list[dict]:
+    inp = run / "inputs" / "retry" / "src" / "Retry.fs"
+    out = next(iter(sorted((run / "outputs").glob("**/src/Retry.fs"))), run / "outputs" / "src" / "Retry.fs")
+    res = [comment_only(inp, out)]
+    text = out.read_text(encoding="utf-8-sig") if out.exists() else ""
+    inline = [r for r in (DELAY_REMARK, ATTEMPTS_REMARK) if r in text]
+    res.append(check("Duplicated remarks no longer appear inline in Retry.fs", bool(text) and not inline,
+                     f"still inline: {inline}" if inline else ("removed" if text else "no output")))
+    lines = text.splitlines()
+    members = [i for i, l in enumerate(lines) if re.match(r"\s*member (this|_)\.(Delay|DelaySeconds|Attempts)\(", l)]
+    missing = []
+    for i in members:
+        j = i - 1
+        block = []
+        while j >= 0 and lines[j].strip().startswith("///"):
+            block.append(lines[j]); j -= 1
+        if not any("<summary>" in b for b in block):
+            missing.append(f"L{i + 1}")
+    res.append(check("Every overload keeps an inline <summary>", bool(members) and not missing,
+                     f"{len(members)} overloads; missing: {missing or 'none'}"))
+    xmls = sorted((run / "outputs").glob("**/xmldoc/*.xml"))
+    wellformed = []
+    for x in xmls:
+        try:
+            ET.parse(x); wellformed.append(x)
+        except ET.ParseError as e:
+            pass
+    res.append(check("An xmldoc/*.xml file exists beside src/ and is well-formed", bool(wellformed),
+                     ", ".join(str(x.relative_to(run / "outputs")) for x in xmls) or "none found"))
+    found = audit(out) if out.exists() else []
+    unresolved = [f"L{l}: {m}" for l, k, m in found if k == "include-unresolved"]
+    n_inc = text.count("<include ")
+    res.append(check("Every <include> resolves (no include-unresolved finding)", n_inc > 0 and not unresolved,
+                     f"{n_inc} include(s); unresolved: {unresolved[:3] or 'none'}"))
+    any_xml = []
+    for x in sorted((run / "outputs").glob("**/*.xml")):
+        try:
+            ET.parse(x); any_xml.append(x)
+        except ET.ParseError:
+            pass
+    xml_text = "".join(x.read_text(encoding="utf-8-sig") for x in any_xml)
+    flat = re.sub(r"\s+", " ", xml_text)
+    counts = {r: flat.count(r) for r in (DELAY_REMARK, ATTEMPTS_REMARK)}
+    res.append(check("Each shared remark is written once in the XML file", all(c == 1 for c in counts.values()),
+                     str(counts)))
+    return res + audit_checks(out)
+
+
+GRADERS = {1: grade_eval1, 2: grade_eval2, 3: grade_eval3, 4: grade_eval4}
 
 if __name__ == "__main__":
     it = Path(sys.argv[1])

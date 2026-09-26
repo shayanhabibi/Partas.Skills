@@ -52,6 +52,25 @@
         "Audit script reports zero convention findings",
         "Zero FS3390 findings (malformed XML, unknown or partial <param>)"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "The overloads in src/Retry.fs repeat the same remarks word for word (all the Delay ones, and both Attempts). Move the shared remarks into an include file so they're written once. Docs only, don't touch the code. Save the result under the outputs folder with the project layout kept (src/Retry.fs plus any new files).",
+      "expected_output": "src/Retry.fs with inline summaries kept and the duplicated remarks replaced by <include> tags; an xmldoc/*.xml file holding one fragment per shared remark, each a complete <remarks> element; every include resolves; comment-only change.",
+      "files": [
+        "evals/files/retry/src/Retry.fs"
+      ],
+      "assertions": [
+        "Only /// lines differ from the input (comment-only change)",
+        "Duplicated remarks no longer appear inline in Retry.fs",
+        "Every overload keeps an inline <summary>",
+        "An xmldoc/*.xml file exists beside src/ and is well-formed",
+        "Every <include> resolves (no include-unresolved finding)",
+        "Each shared remark is written once in the XML file",
+        "Audit script reports zero convention findings",
+        "Zero FS3390 findings (malformed XML, unknown or partial <param>)"
+      ],
+      "name": "include-extract"
     }
   ]
 }
