@@ -1,0 +1,11 @@
+{
+  "name": "fsharp-xml-docs",
+  "description": "Partas conventions for writing, auditing and fixing F# XML documentation comments, with roboz0r's comment-hygiene writing rules and an FCS-based audit script.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Shayan Habibi",
+    "email": "shayanftw@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["fsharp", "xml-docs", "documentation", "comments", "partas"]
+}

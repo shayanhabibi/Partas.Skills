@@ -1,0 +1,16 @@
+{
+  "name": "partas",
+  "description": "Skills for Partas F# projects.",
+  "owner": {
+    "name": "Shayan Habibi",
+    "email": "shayanftw@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "fsharp-xml-docs",
+      "source": "./plugins/fsharp-xml-docs",
+      "description": "Writing, auditing and fixing F# XML documentation comments the Partas way.",
+      "category": "code-quality"
+    }
+  ]
+}
