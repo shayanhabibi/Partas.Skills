@@ -5,7 +5,7 @@ Claude Code skills for Partas F# projects, published as the `partas` plugin mark
 ## Install
 
 ```shell
-/plugin marketplace add <path-or-git-url-of-this-repo>
+/plugin marketplace add shayanhabibi/Partas.Skills
 /plugin install fsharp-xml-docs@partas
 ```
 
