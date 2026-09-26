@@ -28,7 +28,10 @@ let checker = lazy (FSharpChecker.Create())
 let private sourceOf (path: string) = SourceText.ofString (File.ReadAllText path)
 
 /// <summary>Every non-empty doc on a module, type, member, union case or record field.</summary>
-/// <remarks>Field names follow the FCS 43.13 syntax tree; <c>audit.fsx</c> pins that version.</remarks>
+/// <remarks>
+/// Parses against FCS 43.12 (.NET 10 SDK) and 43.13 (.NET 11 SDK). Record fields match by position:
+/// the field is <c>recordFields</c> in 43.12 and <c>recordFieldsAndSpreads</c> in 43.13.
+/// </remarks>
 let docsOf (input: ParsedInput) : XmlDoc list =
     let doc (x: PreXmlDoc) = x.ToXmlDoc(false, None)
     let fieldDoc (o: obj) =
@@ -38,7 +41,7 @@ let docsOf (input: ParsedInput) : XmlDoc list =
     let simpleRepr (repr: SynTypeDefnSimpleRepr) =
         match repr with
         | SynTypeDefnSimpleRepr.Union(unionCases = cs) -> cs |> List.map (fun (SynUnionCase(xmlDoc = x)) -> doc x)
-        | SynTypeDefnSimpleRepr.Record(recordFieldsAndSpreads = fs) ->
+        | SynTypeDefnSimpleRepr.Record(_, fs, _) ->
             fs |> List.collect (fun f ->
                 match box f with
                 | :? SynField -> fieldDoc (box f)

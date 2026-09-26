@@ -4,9 +4,10 @@
 //   --include-generated  also audit generated files found under a directory
 //   --docs      print every doc block with its lines and declaration instead of auditing
 //   --against <original>  with one edited file: also report code lines that differ from <original>
-// The FCS version must match the syntax tree XmlDocAudit.fsx was written against.
+// Binds to the running SDK's own FCS: a NuGet copy of another version fails to load beside it.
+// Tested on FCS 43.12 (.NET 10 SDK) and 43.13 (.NET 11 SDK).
 
-#r "nuget: FSharp.Compiler.Service, 43.13.101-rc1.26425.128"
+#r "FSharp.Compiler.Service.dll"
 #load "XmlDocAudit.fsx"
 
 let args = fsi.CommandLineArgs |> Array.skip 1 |> List.ofArray

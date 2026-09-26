@@ -162,7 +162,7 @@ only where a doc makes a claim you need to check. Either way, report prose findi
 and line alongside the script's findings. When the report goes to a file, the final reply gives
 counts by severity and points to the file; it does not restate the findings.
 
-With a SageFs session, load the audit in-process instead (sub-second re-runs, no restore): see
+With a SageFs session, load the audit in-process instead (sub-second re-runs): see
 `references/sagefs.md`. Otherwise use the CLI (`<skill dir>` is the directory holding this file):
 
 ```shell
@@ -174,8 +174,8 @@ dotnet fsi <skill dir>/scripts/audit.fsx --compiler --against <original> <edited
 
 `--docs` replaces the audit; run it as a separate command. `--against` reports `code-removed`
 and `code-added` for any non-`///` line that differs (BOM, line endings and blank lines
-ignored), else prints `comment-only`. The first CLI run restores FSharp.Compiler.Service and
-takes seconds.
+ignored), else prints `comment-only`. The script uses the running SDK's own
+FSharp.Compiler.Service (.NET 10 or 11), so there is no restore.
 
 ### Generated docs are out of scope
 

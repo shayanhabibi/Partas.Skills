@@ -3,7 +3,7 @@
 Copied verbatim from roboz0r's `comment-hygiene` plugin
 (<https://github.com/roboz0r/comment-hygiene>, `skills/comment-hygiene/writing.md`,
 commit `bc7803b7728b6c4d28be5228b50169362ace9353`, 2026-08-24), MIT License,
-Copyright (c) 2026 roboz0r. The full notice is in `LICENSE-comment-hygiene` at the repository root.
+Copyright (c) 2026 roboz0r. The full notice is in `LICENSE-comment-hygiene` in the skill directory.
 
 This is the writing-time half only. Reviews and whole-file sweeps use the plugin itself
 (`comment-hygiene@roboz0r`): its taxonomy, `sweep.md`, `review-comments.ps1` and

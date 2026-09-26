@@ -16,5 +16,6 @@ XmlDocAudit.codeChanges @"<original>" @"<edited>";; // what --against adds
 ```
 
 A whole repository audits in well under a second on a warm session.
-`XmlDocAudit.auditWith compiler true paths` includes generated files. If the host's FCS version
-differs from 43.13 and the load fails with syntax-tree pattern errors, fall back to the CLI.
+`XmlDocAudit.auditWith compiler true paths` includes generated files. The audit parses against
+FCS 43.12 and 43.13. If the host's FCS is another version and the load fails with syntax-tree
+pattern errors, fall back to the CLI.

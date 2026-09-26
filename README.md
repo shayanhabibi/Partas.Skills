@@ -22,8 +22,9 @@ project's `.claude/rules/` so the core conventions are loaded whenever code is w
 
 `plugins/fsharp-xml-docs/skills/fsharp-xml-docs/references/comment-hygiene.md` is copied from
 roboz0r's [comment-hygiene](https://github.com/roboz0r/comment-hygiene) (MIT; notice in
-`LICENSE-comment-hygiene`). The source commit is recorded at the top of that file. To re-sync,
-diff it against upstream `skills/comment-hygiene/writing.md` and update the recorded commit.
+`plugins/fsharp-xml-docs/skills/fsharp-xml-docs/LICENSE-comment-hygiene`, shipped with the
+skill). The source commit is recorded at the top of that file. To re-sync, diff it against
+upstream `skills/comment-hygiene/writing.md` and update the recorded commit.
 Reviews and sweeps use roboz0r's plugin directly (`comment-hygiene@roboz0r`).
 
 ## Evals
